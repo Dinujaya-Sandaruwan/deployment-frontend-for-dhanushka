@@ -29,33 +29,8 @@ jobs:
     - name: Build React app
       run: npm run build
     
-    # Deploy to Azure VM via SSH
-    - name: Deploy to Azure VM
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: 52.229.166.212
-        username: dinujaya
-        password: v4cq#b~#aUcN~14F
-        port: 22
-        script: |
-          # Navigate to the application directory
-          cd /var/www/html
-          
-          # Pull the latest changes from git
-          git pull origin main
-          
-          # Install dependencies
-          npm ci
-          
-          # Build the application
-          npm run build
-          
-          # Optional: Restart any services if needed (e.g., PM2, nginx)
-          # sudo systemctl restart nginx
-          # pm2 restart your-app-name
-    
-    # Alternative deployment method: Copy build files directly
-    - name: Copy files via SSH
+    # Deploy to Azure VM - Method 1: Copy build files directly
+    - name: Copy build files to Azure VM
       uses: appleboy/scp-action@v0.1.5
       with:
         host: 52.229.166.212
@@ -65,3 +40,28 @@ jobs:
         source: "build/*"
         target: "/var/www/html"
         strip_components: 1
+        rm: true  # Remove existing files in target directory
+    
+    # Alternative Method 2: Deploy entire project and build on VM (requires Node.js on VM)
+    # - name: Deploy entire project to Azure VM
+    #   uses: appleboy/scp-action@v0.1.5
+    #   with:
+    #     host: 52.229.166.212
+    #     username: dinujaya
+    #     password: v4cq#b~#aUcN~14F
+    #     port: 22
+    #     source: "."
+    #     target: "/var/www/html"
+    #     rm: true
+    
+    # - name: Build on Azure VM
+    #   uses: appleboy/ssh-action@v0.1.5
+    #   with:
+    #     host: 52.229.166.212
+    #     username: dinujaya
+    #     password: v4cq#b~#aUcN~14F
+    #     port: 22
+    #     script: |
+    #       cd /var/www/html
+    #       npm ci
+    #       npm run build
