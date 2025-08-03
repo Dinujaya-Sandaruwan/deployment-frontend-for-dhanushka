@@ -29,39 +29,92 @@ jobs:
     - name: Build React app
       run: npm run build
     
-    # Deploy to Azure VM - Method 1: Copy build files directly
-    - name: Copy build files to Azure VM
+    # Debug: List files to verify build output
+    - name: List build output
+      run: |
+        echo "Current directory contents:"
+        ls -la
+        echo "---"
+        if [ -d "build" ]; then
+          echo "Build directory contents:"
+          ls -la build/
+        elif [ -d "dist" ]; then
+          echo "Dist directory contents:"
+          ls -la dist/
+        else
+          echo "No build or dist directory found!"
+          echo "Checking for other common output directories:"
+          find . -type d -name "build" -o -name "dist" -o -name "out" | head -20
+        fi
+    
+    # Create a deployment package
+    - name: Create deployment package
+      run: |
+        # Check if build directory exists, if not check for dist
+        if [ -d "build" ]; then
+          echo "Using build directory"
+          cd build
+        elif [ -d "dist" ]; then
+          echo "Using dist directory"
+          cd dist
+        else
+          echo "Error: No build output directory found!"
+          exit 1
+        fi
+        
+        # Create a tar file of all contents
+        tar -czf ../deploy.tar.gz .
+        cd ..
+        ls -la deploy.tar.gz
+    
+    # Deploy to Azure VM - Method 1: Using tar file
+    - name: Copy deployment package to Azure VM
       uses: appleboy/scp-action@v0.1.5
       with:
         host: 52.229.166.212
         username: dinujaya
         password: v4cq#b~#aUcN~14F
         port: 22
-        source: "build/*"
-        target: "/var/www/html"
-        strip_components: 1
-        rm: true  # Remove existing files in target directory
+        source: "deploy.tar.gz"
+        target: "/tmp"
     
-    # Alternative Method 2: Deploy entire project and build on VM (requires Node.js on VM)
-    # - name: Deploy entire project to Azure VM
+    # Extract files on the server
+    - name: Extract files on Azure VM
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: 52.229.166.212
+        username: dinujaya
+        password: v4cq#b~#aUcN~14F
+        port: 22
+        script: |
+          # Backup existing files (optional)
+          if [ -d "/var/www/html" ]; then
+            sudo tar -czf /tmp/backup-$(date +%Y%m%d-%H%M%S).tar.gz -C /var/www/html .
+          fi
+          
+          # Clear the target directory
+          sudo rm -rf /var/www/html/*
+          
+          # Extract new files
+          sudo tar -xzf /tmp/deploy.tar.gz -C /var/www/html
+          
+          # Set proper permissions
+          sudo chown -R www-data:www-data /var/www/html
+          
+          # Clean up
+          rm /tmp/deploy.tar.gz
+          
+          echo "Deployment completed successfully!"
+    
+    # Alternative Method 2: Direct copy (if you know your build directory)
+    # - name: Copy build files directly
     #   uses: appleboy/scp-action@v0.1.5
     #   with:
     #     host: 52.229.166.212
     #     username: dinujaya
     #     password: v4cq#b~#aUcN~14F
     #     port: 22
-    #     source: "."
+    #     source: "build/"
     #     target: "/var/www/html"
+    #     strip_components: 1
     #     rm: true
-    
-    # - name: Build on Azure VM
-    #   uses: appleboy/ssh-action@v0.1.5
-    #   with:
-    #     host: 52.229.166.212
-    #     username: dinujaya
-    #     password: v4cq#b~#aUcN~14F
-    #     port: 22
-    #     script: |
-    #       cd /var/www/html
-    #       npm ci
-    #       npm run build
