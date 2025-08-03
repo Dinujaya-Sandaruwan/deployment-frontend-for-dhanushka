@@ -11,6 +11,8 @@ function App() {
   const [message, setMessage] = useState<string>("");
   const [users, setUsers] = useState<UserTypes[]>([]);
 
+    console.log(message);
+
   const loadUsers = async () => {
     try {
       const response = await axios.get('http://localhost:8080/users');
