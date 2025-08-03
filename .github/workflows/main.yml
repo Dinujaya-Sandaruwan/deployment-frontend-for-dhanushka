@@ -1,0 +1,67 @@
+name: Deploy React App to Azure VM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    # Checkout the repository
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    # Setup Node.js
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    # Install dependencies
+    - name: Install dependencies
+      run: npm ci
+    
+    # Build the React app
+    - name: Build React app
+      run: npm run build
+    
+    # Deploy to Azure VM via SSH
+    - name: Deploy to Azure VM
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: 52.229.166.212
+        username: dinujaya
+        password: v4cq#b~#aUcN~14F
+        port: 22
+        script: |
+          # Navigate to the application directory
+          cd /var/www/html
+          
+          # Pull the latest changes from git
+          git pull origin main
+          
+          # Install dependencies
+          npm ci
+          
+          # Build the application
+          npm run build
+          
+          # Optional: Restart any services if needed (e.g., PM2, nginx)
+          # sudo systemctl restart nginx
+          # pm2 restart your-app-name
+    
+    # Alternative deployment method: Copy build files directly
+    - name: Copy files via SSH
+      uses: appleboy/scp-action@v0.1.5
+      with:
+        host: 52.229.166.212
+        username: dinujaya
+        password: v4cq#b~#aUcN~14F
+        port: 22
+        source: "build/*"
+        target: "/var/www/html"
+        strip_components: 1
