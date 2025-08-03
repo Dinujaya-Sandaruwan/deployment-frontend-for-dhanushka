@@ -15,7 +15,7 @@ function App() {
 
   const loadUsers = async () => {
     try {
-      const response = await axios.get('http://52.229.166.212:8080/users');
+      const response = await axios.get('http://localhost:8080/users');
       setUsers(response.data);
       console.log(response.data);
       setMessage('Users loaded successfully!');
@@ -35,7 +35,7 @@ function App() {
 
   const handleUpdate = async () => {
     try {
-      await axios.put(`http://52.229.166.212:8080/users/${editUser?.id}`, {
+      await axios.put(`http://localhost:8080/users/${editUser?.id}`, {
         name: name,
         age: age
       });
@@ -53,7 +53,7 @@ function App() {
 
   const deleteUser = async (id: string) => {
     try {
-      await axios.delete(`http://52.229.166.212:8080/users/${id}`);
+      await axios.delete(`http://localhost:8080/users/${id}`);
 
 
 
@@ -74,7 +74,7 @@ function App() {
     e.preventDefault();
 
     try {
-      const response = await axios.post('http://52.229.166.212:8080/users', {
+      const response = await axios.post('http://localhost:8080/users', {
         name: name,
         age: age
       });
